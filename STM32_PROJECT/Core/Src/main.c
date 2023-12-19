@@ -62,21 +62,22 @@ static void MX_TIM2_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-uint8_t is_begin;
-uint8_t temp = 0;
-uint8_t extern buffer[MAX_BUFFER_SIZE];
-uint8_t extern index_buffer; //Initial 0 in main function
-uint8_t buffer_flag = 0;
+uint8_t is_begin;//flag using indicate receive '!'
+uint8_t temp = 0;//char receive from UART
+uint8_t extern buffer[MAX_BUFFER_SIZE];//buffer for save chars which receive from UART
+uint8_t extern index_buffer;//Initial 0 in main function
+uint8_t buffer_flag = 0;//it will set when receive '#' after '!' and other bytes data
 
 void HAL_UART_RxCpltCallback ( UART_HandleTypeDef * huart ){
 	if(huart->Instance == USART2){
 		buffer[index_buffer++] = temp;
-		if(index_buffer == 30) index_buffer = 0;
+		if(index_buffer == MAX_BUFFER_SIZE) index_buffer = 0;
 
 		if(temp == '!')
 			is_begin = 1;
 
 		if(temp == '#' && is_begin){
+			is_begin = 0;
 			buffer_flag = 1;
 		}
 
@@ -135,12 +136,15 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 
-	  if(buffer_flag == 1) {
-		  command_parser_fsm();
+	  if(buffer_flag == 1) {//receive full command "!<data>#"
+		  command_parser_fsm();//set flag if command is valid
 		  buffer_flag = 0;
 	  }
+
+	  //read ADC if flag is set
 	  uart_communiation_fsm();
 
+	  //blink led every 1 second
 	  if(get_timer_blink_led()){
 		  set_timer_blink_led(100);
 		  HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);

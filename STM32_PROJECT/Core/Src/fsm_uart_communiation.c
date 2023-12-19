@@ -21,9 +21,9 @@ void uart_communiation_fsm(){
 	case READ_ADC:
 		if(read_adc_flag){//if flag indicate read adc is set
 			read_adc_flag = 0;
+			ok_flag = 0;//reset OK flag for handle receive command OK before RST
 			//TODO
-			//read adc
-			adc_value = HAL_ADC_GetValue(&hadc1);
+			adc_value = HAL_ADC_GetValue(&hadc1);//read adc
 
 			//print adc value through uart
 			uint8_t adc_str[20];
@@ -37,16 +37,11 @@ void uart_communiation_fsm(){
 		}
 		break;
 	case SHOW_ADC:
-		if(ok_flag){
-			ok_flag = 0;
+		if(ok_flag || read_adc_flag){
 			state_uart_communiation_fsm = READ_ADC;
 			return;
 		}
 
-		if(read_adc_flag){
-			state_uart_communiation_fsm = READ_ADC;
-			return;
-		}
 		if(get_timeout_ok()){
 			set_timeout_ok(300);//3 seconds
 
